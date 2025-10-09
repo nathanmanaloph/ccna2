@@ -1,0 +1,157 @@
+STATIC ROUTING
+
+!@R1
+conf t
+ip route 10.1.1.5 255.255.255.255 10.1.1.2
+end
+ping 10.1.1.1
+
+conf t
+ip route 10.1.1.1 255.255.255.255 10.1.1.5
+end
+ping 10.1.1.1
+
+--- STATIC NETWORK ROUTE CONFIG ---
+
+!@R1
+conf t
+ ip route 10.1.1.8 255.255.255.252 10.1.1.2
+ end
+ 
+ !@R4
+conf t
+ ip route 10.1.1.0 255.255.255.252 10.1.1.9
+ end
+ 
+ !@R2
+conf t
+ ip route 10.1.1.8 255.255.255.252 10.1.1.6
+ end
+ 
+ !@R3
+conf t
+ ip route 10.1.1.0 255.255.255.252 10.1.1.5 or via interface (e1/1)
+ end
+ 
+ ----
+ 
+ !@P1
+ config t
+ int e0/0
+ ip add 10.2.1.101 255.255.255.0
+ no shut
+ end
+ 
+ !@P2
+ config t
+ int e1/0
+ ip add 10.2.1.102 255.255.255.0
+ no shut
+ end
+ 
+ --- CHANGE VLAN FROM DEFAULT VLAN 1 to VLAN 10
+ 
+ !@A1 (P1 to D1)
+ config t
+ interface e0/0
+ switchport mode access
+ switchport access vlan 10
+ end
+ 
+ !@A2 (P2 to D2)
+ config t
+ interface e1/0
+ switchport mode access
+ switchport access vlan 10
+ end
+ 
+ ---FLOATING STATIC ROUTE
+ !@P1
+ config t 
+ ip route 192.168.1.128 255.255.255.224 10.2.1.1
+ end
+ traceroute 192.168.1.129
+ traceroute 192.168.1.130
+ traceroute	192.168.1.132
+ 
+ --- LONGEST PREFIX RULE
+!@P1
+ config t 
+ ip route 192.168.1.128 255.255.255.224 10.2.1.1
+ ip route 192.168.1.130 255.255.255.255 10.2.1.2
+ end
+ 
+  ---FLOATING STATIC DEFAULT ROUTE
+!@A1
+conf t
+ip route 0.0.0.0 0.0.0.0 192.168.1.129
+ip route 0.0.0.0 0.0.0.0 192.168.1.130 10 (!upto 254)
+end
+show ip route
+
+--TEST FLOATING STATIC DEFAULT ROUTE
+
+D2 - primary
+D1 - backup
+
+!@A2
+conf t
+ip route 0.0.0.0 0.0.0.0 192.168.1.130
+ip route 0.0.0.0 0.0.0.0 192.168.1.129 10
+end
+show ip route
+
+----DYNAMIC ROUTING
+IGP
+- Link-State
+- OSPF
+- ISIS
+Distance Vector
+- EIGRP
+- RIP
+EGP
+-BGP
+
+!@D2
+conf t
+ router eigrp 100
+  no auto-summary
+  network 10.1.4.8 0.0.0.3
+  network 10.2.1.0 0.0.0.255
+  network 10.2.2.0 0.0.0.255
+  network 192.168.1.128 0.0.0.31
+  end
+  
+ --- CAPTURE PACKETS in RSTHAYUP
+ !@R4
+ config t
+ int e3/3
+ no shut
+ ip add 208.8.8.100 255.255.255.0
+ router eigrp 100
+ network 208.8.8.0 0.0.0.255
+ end
+ 
+ Open Wireshark
+ Capture VMNet8 NetADAPTER
+ 
+ !@R4
+ conf t
+ int lo0
+ ip add 4.40.40.40 255.255.255.255
+ ip ospf 1 area 4
+ end
+ 
+ 
+ 
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
